@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Manegar Ahmed & Lubna — Wedding</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Great+Vibes&family=Cinzel:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --gold: #b8922a;
+  --gold-light: #c9a96e;
+  --gold-pale: #e8d4a4;
+  --parchment: #fdf8f0;
+  --ink: #3a2610;
+  --ink-mid: #6b4c1e;
+  --ink-soft: #8c6d3f;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #080402;
+  font-family: 'Cormorant Garamond', serif;
+  overflow: hidden;
+}
+
+/* starfield */
+canvas#stars {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.scene {
+  position: relative;
+  z-index: 1;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── ENVELOPE STATE ── */
+.stage {
+  position: relative;
+  width: min(280px, 78vw);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* envelope */
+.envelope {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 7/5;
+  cursor: pointer;
+  filter: drop-shadow(0 20px 60px rgba(0,0,0,.8));
+  transition: transform .35s ease, filter .35s;
+  z-index: 10;
+}
+.envelope:hover { transform: translateY(-4px); filter: drop-shadow(0 28px 70px rgba(0,0,0,.85)) drop-shadow(0 0 20px rgba(184,146,42,.15)); }
+.envelope.opened { cursor: default; pointer-events: none; }
+
+.env-body {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(155deg, #f9f0dc 0%, #efe0bc 60%, #e8d4a4 100%);
+  border-radius: 3px;
+  border: 1px solid var(--gold-light);
+  overflow: hidden;
+}
+
+/* side folds */
+.env-body::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(135deg, rgba(255,255,255,.18) 0%, transparent 50%),
+    linear-gradient(-45deg, rgba(0,0,0,.06) 0%, transparent 50%);
+}
+
+.env-left, .env-right {
+  position: absolute;
+  bottom: 0;
+  width: 0; height: 0;
+}
+.env-left {
+  left: 0;
+  border-left: 50% solid #e2cfa0;
+  border-top: 48% solid transparent;
+  border-bottom: 52% solid transparent;
+}
+.env-right {
+  right: 0;
+  border-right: 50% solid #e2cfa0;
+  border-top: 48% solid transparent;
+  border-bottom: 52% solid transparent;
+}
+.env-bottom {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 55%;
+  overflow: hidden;
+}
+.env-bottom::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0;
+  width: 0; height: 0;
+  border-left: 50vw solid transparent;
+  border-right: 50vw solid transparent;
+  border-bottom: 110% solid #eddec0;
+}
+
+/* flap */
+.env-flap {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 58%;
+  transform-origin: top center;
+  transform-style: preserve-3d;
+  transition: transform .9s cubic-bezier(.4,0,.2,1);
+  z-index: 12;
+}
+.env-flap-face {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+.env-flap-face::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 0; height: 0;
+  border-left: 50vw solid transparent;
+  border-right: 50vw solid transparent;
+  border-top: 100% solid #e8d9b0;
+}
+.envelope.opened .env-flap { transform: rotateX(-178deg); }
+
+/* seal */
+.seal {
+  position: absolute;
+  top: 38%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: clamp(40px, 14%, 52px);
+  aspect-ratio: 1;
+  z-index: 14;
+  transition: transform .5s cubic-bezier(.4,0,.2,1), opacity .4s;
+}
+.seal-circle {
+  width: 100%; height: 100%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 32%, #be3a2a, #6e1810);
+  border: 1.5px solid #e8c49a;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 3px 12px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.15);
+}
+.seal-letter {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(14px, 5%, 20px);
+  font-weight: 600;
+  color: rgba(255,255,255,.92);
+  line-height: 1;
+}
+.envelope.opened .seal { transform: translate(-50%,-50%) scale(0) rotate(20deg); opacity: 0; }
+
+/* envelope label */
+.env-to {
+  position: absolute;
+  bottom: 18%; left: 0; right: 0;
+  text-align: center;
+  font-style: italic;
+  font-size: clamp(9px, 2.5vw, 12px);
+  color: var(--ink-mid);
+  letter-spacing: .5px;
+  pointer-events: none;
+}
+
+/* hint */
+.hint {
+  margin-top: 18px;
+  font-style: italic;
+  font-size: clamp(11px, 3vw, 13px);
+  color: var(--gold-light);
+  letter-spacing: 2px;
+  animation: breathe 2.2s ease-in-out infinite;
+  transition: opacity .5s;
+}
+.hint.gone { opacity: 0; pointer-events: none; }
+@keyframes breathe { 0%,100%{opacity:.4;} 50%{opacity:1;} }
+
+/* ── CARD ── */
+.card-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(12px, 4vw, 24px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .6s .5s;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.card-overlay.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* dark blur backdrop */
+.card-overlay::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: rgba(4,2,0,.82);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: -1;
+}
+
+.card {
+  width: 100%;
+  max-width: 320px;
+  background: linear-gradient(158deg, #fdf9f2 0%, #faf4e5 55%, #f5ecda 100%);
+  border: 1px solid var(--gold-light);
+  border-radius: 3px;
+  padding: clamp(18px, 5vw, 28px) clamp(14px, 4vw, 24px);
+  text-align: center;
+  position: relative;
+  box-shadow:
+    0 40px 100px rgba(0,0,0,.7),
+    0 0 0 1px rgba(201,169,110,.12),
+    inset 0 1px 0 rgba(255,255,255,.6);
+  transform: translateY(30px) scale(.96);
+  transition: transform .7s cubic-bezier(.2,0,.2,1) .5s;
+  flex-shrink: 0;
+}
+.card-overlay.visible .card {
+  transform: translateY(0) scale(1);
+}
+
+/* corner ornaments */
+.co {
+  position: absolute;
+  width: clamp(44px, 13%, 60px);
+  height: clamp(44px, 13%, 60px);
+  opacity: .45;
+  pointer-events: none;
+}
+.co-tl { top: 0; left: 0; }
+.co-tr { top: 0; right: 0; transform: scaleX(-1); }
+.co-bl { bottom: 0; left: 0; transform: scaleY(-1); }
+.co-br { bottom: 0; right: 0; transform: scale(-1); }
+
+/* arch frame */
+.arch {
+  border: 1px solid var(--gold-light);
+  border-radius: clamp(70px,22vw,100px) clamp(70px,22vw,100px) 4px 4px;
+  padding: clamp(16px,4vw,24px) clamp(12px,3vw,18px) clamp(14px,4vw,20px);
+  position: relative;
+}
+.arch::before {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border: .5px solid rgba(201,169,110,.5);
+  border-radius: calc(clamp(70px,22vw,100px) - 4px) calc(clamp(70px,22vw,100px) - 4px) 2px 2px;
+  pointer-events: none;
+}
+
+.top-gem { color: var(--gold); font-size: clamp(11px,3vw,14px); letter-spacing: 5px; margin-bottom: clamp(8px,2.5vw,12px); }
+
+.bismillah {
+  font-style: italic;
+  font-size: clamp(10px,2.8vw,12.5px);
+  color: var(--ink-soft);
+  line-height: 1.65;
+  margin-bottom: clamp(10px,3vw,14px);
+}
+
+.sep {
+  display: flex; align-items: center; gap: 8px;
+  margin: clamp(6px,2vw,10px) 0;
+}
+.sep-line {
+  flex: 1; height: .5px;
+  background: linear-gradient(to right, transparent, var(--gold-light), transparent);
+}
+.sep-gem { color: var(--gold); font-size: 9px; }
+
+.hosts {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(9px,2.6vw,11.5px);
+  font-weight: 600;
+  color: var(--ink-mid);
+  letter-spacing: .8px;
+  margin-bottom: clamp(4px,1.5vw,6px);
+}
+
+.invite-text {
+  font-size: clamp(10px,2.8vw,12.5px);
+  color: var(--ink-soft);
+  line-height: 1.65;
+  margin-bottom: clamp(10px,3vw,14px);
+}
+
+.groom {
+  font-family: 'Great Vibes', cursive;
+  font-size: clamp(36px,12vw,52px);
+  color: var(--gold);
+  line-height: 1.05;
+  text-shadow: 0 1px 0 rgba(255,255,255,.5);
+}
+
+.with-row {
+  display: flex; align-items: center; gap: 8px;
+  justify-content: center;
+  margin: clamp(4px,1.5vw,8px) 0;
+}
+.with-line {
+  flex: 1; height: .5px; max-width: 55px;
+  background: linear-gradient(to right, transparent, var(--gold-light), transparent);
+}
+.with-word {
+  font-style: italic;
+  font-size: clamp(9.5px,2.6vw,11.5px);
+  color: #a08040;
+  letter-spacing: 3px;
+}
+
+.bride {
+  font-family: 'Great Vibes', cursive;
+  font-size: clamp(30px,10vw,42px);
+  color: var(--gold);
+  line-height: 1.05;
+  text-shadow: 0 1px 0 rgba(255,255,255,.5);
+}
+
+.dof {
+  font-style: italic;
+  font-size: clamp(9.5px,2.6vw,11.5px);
+  color: var(--ink-soft);
+  margin-bottom: clamp(10px,3vw,14px);
+}
+
+.events {
+  display: grid;
+  grid-template-columns: 1fr 1px 1fr;
+  margin: clamp(4px,1.5vw,6px) 0 clamp(10px,3vw,14px);
+}
+.ev-sep { background: linear-gradient(to bottom, transparent, var(--gold-light), transparent); }
+.ev { padding: 0 clamp(6px,2vw,10px); }
+.ev-tag {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(7.5px,2.2vw,9.5px);
+  font-weight: 600;
+  color: var(--ink-mid);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: clamp(3px,1vw,5px);
+}
+.ev-date {
+  font-size: clamp(10px,2.8vw,12px);
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.45;
+  margin-bottom: 2px;
+}
+.ev-time {
+  font-style: italic;
+  font-size: clamp(9.5px,2.6vw,11px);
+  color: var(--ink-soft);
+}
+
+.venue-block {
+  border-top: .5px solid var(--gold-light);
+  padding-top: clamp(10px,3vw,14px);
+}
+.venue-tag {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(7.5px,2.2vw,9px);
+  letter-spacing: 2.5px;
+  color: var(--ink-soft);
+  margin-bottom: clamp(3px,1vw,5px);
+}
+.venue-name {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(13px,4vw,17px);
+  font-weight: 600;
+  color: var(--gold);
+  letter-spacing: 2px;
+  margin-bottom: clamp(2px,1vw,4px);
+}
+.venue-addr {
+  font-size: clamp(9.5px,2.6vw,11.5px);
+  color: var(--ink-soft);
+  line-height: 1.6;
+}
+
+.footer-gem { color: var(--gold-light); font-size: 8px; letter-spacing: 5px; margin: clamp(8px,2.5vw,12px) 0 clamp(6px,2vw,10px); }
+
+.badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  border: .5px solid rgba(201,169,110,.4);
+  border-radius: 20px;
+  padding: 3px 12px;
+  font-style: italic;
+  font-size: clamp(9px,2.4vw,10.5px);
+  color: var(--ink-soft);
+  background: rgba(184,146,42,.05);
+}
+
+/* close btn */
+.close-btn {
+  position: fixed;
+  top: max(16px, env(safe-area-inset-top, 16px));
+  right: 16px;
+  z-index: 200;
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: rgba(184,146,42,.12);
+  border: .5px solid rgba(201,169,110,.4);
+  color: var(--gold-light);
+  font-size: 16px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .4s .6s;
+}
+.close-btn.visible { opacity: 1; pointer-events: auto; }
+.close-btn:hover { background: rgba(184,146,42,.22); }
+</style>
+</head>
+<body>
+
+<canvas id="stars"></canvas>
+
+<div class="scene">
+  <div class="stage">
+
+    <div class="envelope" id="env" onclick="openCard()">
+      <div class="env-body">
+        <div class="env-left"></div>
+        <div class="env-right"></div>
+        <div class="env-bottom"></div>
+        <div class="env-to">A Wedding Invitation</div>
+      </div>
+      <div class="env-flap"><div class="env-flap-face"></div></div>
+      <div class="seal" id="seal">
+        <div class="seal-circle"><span class="seal-letter">M</span></div>
+      </div>
+    </div>
+
+    <div class="hint" id="hint">✦ &nbsp; tap to open &nbsp; ✦</div>
+  </div>
+</div>
+
+<!-- full-screen card overlay -->
+<div class="card-overlay" id="overlay">
+  <div class="card">
+
+    <svg class="co co-tl" viewBox="0 0 60 60" fill="none">
+      <path d="M2 58Q2 2 58 2" stroke="#c9a96e" stroke-width="1" fill="none"/>
+      <circle cx="9" cy="9" r="2" fill="#c9a96e" opacity=".7"/>
+      <path d="M13 3C13 3 19 7 17 15C22 10 28 12 28 12" stroke="#b8922a" stroke-width=".8" fill="none"/>
+      <circle cx="17" cy="15" r="1.2" fill="#b8922a" opacity=".6"/>
+    </svg>
+    <svg class="co co-tr" viewBox="0 0 60 60" fill="none">
+      <path d="M2 58Q2 2 58 2" stroke="#c9a96e" stroke-width="1" fill="none"/>
+      <circle cx="9" cy="9" r="2" fill="#c9a96e" opacity=".7"/>
+      <path d="M13 3C13 3 19 7 17 15C22 10 28 12 28 12" stroke="#b8922a" stroke-width=".8" fill="none"/>
+    </svg>
+    <svg class="co co-bl" viewBox="0 0 60 60" fill="none">
+      <path d="M2 58Q2 2 58 2" stroke="#c9a96e" stroke-width="1" fill="none"/>
+      <circle cx="9" cy="9" r="2" fill="#c9a96e" opacity=".7"/>
+    </svg>
+    <svg class="co co-br" viewBox="0 0 60 60" fill="none">
+      <path d="M2 58Q2 2 58 2" stroke="#c9a96e" stroke-width="1" fill="none"/>
+      <circle cx="9" cy="9" r="2" fill="#c9a96e" opacity=".7"/>
+    </svg>
+
+    <div class="arch">
+      <div class="top-gem">✦ ✦ ✦</div>
+      <div class="bismillah">In the name of Allah,<br>the Most Gracious, the Most Merciful</div>
+
+      <div class="sep"><div class="sep-line"></div><div class="sep-gem">❧</div><div class="sep-line"></div></div>
+
+      <div class="hosts">Mr. &amp; Mrs. Manegar Mohammed Sadique</div>
+      <div class="invite-text">cordially invite you and your family<br>on the occasion of the wedding of their beloved son</div>
+
+      <div class="groom">Manegar Ahmed</div>
+
+      <div class="with-row">
+        <div class="with-line"></div>
+        <div class="with-word">with</div>
+        <div class="with-line"></div>
+      </div>
+
+      <div class="bride">Lubna</div>
+      <div class="dof">(D/o Moulana Mohammed Anees)</div>
+
+      <div class="sep"><div class="sep-line"></div><div class="sep-gem">✦</div><div class="sep-line"></div></div>
+
+      <div class="events">
+        <div class="ev">
+          <div class="ev-tag">Nikah</div>
+          <div class="ev-date">Tuesday<br>20th Oct 2026</div>
+          <div class="ev-time">@ 11:30 AM</div>
+        </div>
+        <div class="ev-sep"></div>
+        <div class="ev">
+          <div class="ev-tag">Valima</div>
+          <div class="ev-date">Wednesday<br>21st Oct 2026</div>
+          <div class="ev-time">12:00 – 3:00 PM</div>
+        </div>
+      </div>
+
+      <div class="venue-block">
+        <div class="venue-tag">✦ &nbsp; Venue &nbsp; ✦</div>
+        <div class="venue-name">M. M. RESORT</div>
+        <div class="venue-addr">Near Toll Gate, Shiroor<br>+91 81058 85437 &nbsp;|&nbsp; 8951757321</div>
+      </div>
+
+      <div class="footer-gem">✦ &nbsp; ✦ &nbsp; ✦</div>
+      <div class="badge">🤍 crafted with code &amp; love</div>
+    </div>
+
+  </div>
+</div>
+
+<div class="close-btn" id="closeBtn" onclick="closeCard()">✕</div>
+
+<script>
+// starfield
+(function(){
+  const c = document.getElementById('stars');
+  const ctx = c.getContext('2d');
+  let W, H, stars = [];
+
+  function resize(){
+    W = c.width = window.innerWidth;
+    H = c.height = window.innerHeight;
+  }
+
+  function init(){
+    stars = [];
+    for(let i = 0; i < 160; i++){
+      stars.push({
+        x: Math.random() * W,
+        y: Math.random() * H,
+        r: Math.random() * 1.1,
+        o: .1 + Math.random() * .7,
+        speed: .0003 + Math.random() * .0008,
+        phase: Math.random() * Math.PI * 2
+      });
+    }
+  }
+
+  function draw(t){
+    ctx.clearRect(0, 0, W, H);
+    stars.forEach(s => {
+      const opacity = s.o * (.6 + .4 * Math.sin(t * s.speed * 1000 + s.phase));
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(201,169,110,${opacity})`;
+      ctx.fill();
+    });
+    requestAnimationFrame(draw);
+  }
+
+  resize();
+  init();
+  window.addEventListener('resize', ()=>{ resize(); init(); });
+  requestAnimationFrame(draw);
+})();
+
+// open / close
+function openCard(){
+  const env = document.getElementById('env');
+  if(env.classList.contains('opened')) return;
+  env.classList.add('opened');
+  document.getElementById('hint').classList.add('gone');
+  setTimeout(()=>{
+    document.getElementById('overlay').classList.add('visible');
+    document.getElementById('closeBtn').classList.add('visible');
+  }, 500);
+}
+
+function closeCard(){
+  document.getElementById('overlay').classList.remove('visible');
+  document.getElementById('closeBtn').classList.remove('visible');
+}
+</script>
+</body>
+</html>
